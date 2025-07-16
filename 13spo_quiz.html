@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WAFCAクイズ</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f9f9f9;
+      color: #333;
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    .question {
+      margin-bottom: 20px;
+    }
+    .options button {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .correct {
+      background-color: #d4edda;
+    }
+    .wrong {
+      background-color: #f8d7da;
+    }
+    .fade-in {
+      animation: fadeIn 0.6s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    #nickname-container {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    #nickname-container input {
+      padding: 8px;
+      font-size: 16px;
+      width: 60%;
+      margin-bottom: 10px;
+    }
+    #nickname-container button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .result {
+      text-align: center;
+      margin-top: 30px;
+    }
+    #restart {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #ranking {
+      margin-top: 20px;
+      text-align: center;
+    }
+    #ranking li {
+      list-style: none;
+      padding: 4px 0;
+    }
+  </style>
+</head>
+<body>
+
+<h1>車いすスポーツクイズ</h1>
+
+<div id="nickname-container">
+  <p>ニックネームを入力してください：</p>
+  <input type="text" id="nickname" placeholder="例: タロー" />
+  <br />
+  <button onclick="startQuiz()">スタート！</button>
+</div>
+
+<div id="quiz-container" style="display:none;">
+  <div id="progress-text" style="text-align:center; font-weight:bold; margin-bottom:10px;"></div>
+  <div id="question-container" class="fade-in"></div>
+  <div class="options" id="options-container"></div>
+  <div id="feedback" style="font-size: 28px; text-align: center; margin-top: 20px; height: 40px;"></div>
+</div>
+
+<div id="explanation-container" style="display:none; text-align:center;">
+  <h2 id="answer-header"></h2>
+  <p id="correct-text"></p>
+  <p id="explanation-text"></p>
+  <button onclick="nextQuestion()">次の問題へ</button>
+</div>
+
+<div class="result" id="result-container" style="display:none;">
+  <h2>結果</h2>
+  <p id="score-text"></p>
+  <button id="restart">もう一度やる</button>
+
+  <div id="ranking">
+    <h3>ランキングTOP5</h3>
+    <ul id="ranking-list"></ul>
+  </div>
+
+  <a href="https://wafca.jp/index.html" target="_blank" style="display:block; margin-top:10px; color:#007BFF;">
+    WAFCA公式サイトはこちら
+  </a>
+</div>
+
+<script>
+  const quizData = [
+    {
+      question: "車いすに乗ったままプレーするスポーツはどれでしょう？",
+      options: [
+        "スキー",
+        "バスケットボール",
+        "水泳",
+        "野球"
+      ],
+      answer: 1,
+      explanation: "<p>車いすに乗ってプレーする「車いすバスケットボール」があります。<br>スピードも迫力<ruby>迫力<rp>(</rp><rt>はくりょく</rt><rp>)</rp></ruby>もある人気のスポーツです！</p>"
+
+    },
+    {
+      question: "パラリンピックって、どんな人が出る大会？",
+      options: [
+        "オリンピックに出たことがある人",
+        "とても早く走れる人",
+        "病気やけがなどで体に<ruby>障<rp>(</rp><rt>しょう</rt><rp>)</rp></ruby>がいのある人",
+        "ロボットが出る大会"
+      ],
+      answer: 2,
+      explanation: "<p>パラリンピックは、障がいがある人たちが<br>力いっぱいがんばるスポーツの大会です！</p>"
+    },
+    {
+      question: "ボッチャというスポーツは、どんなもの？",
+      options: [
+        "たかくジャンプする<ruby>競技<rp>(</rp><rt>きょうぎ</rt><rp>)</rp></ruby>",
+        "ボールを遠くにける<ruby>競技<rp>(</rp><rt>きょうぎ</rt><rp>)</rp></ruby>",
+        "白いボールに近づけるように、赤や青のボールを投げる<ruby>競技<rp>(</rp><rt>きょうぎ</rt><rp>)</rp></ruby>",
+        "音にあわせておどる<ruby>競技<rp>(</rp><rt>きょうぎ</rt><rp>)</rp></ruby>"
+      ],
+      answer: 2,
+      explanation: "<p>ボッチャは、みんなで楽しめるやさしいルールのスポーツで、<br>パラリンピックの<ruby>種目<rp>(</rp><rt>しゅもく</rt><rp>)</rp></ruby>でもあります。</p>"
+    },
+    {
+      question: "車いすテニスでは、ボールを何回バウンドさせてもいいでしょう？",
+      options: [
+        "1回",
+        "2回",
+        "3回",
+        "何回でもOK!"
+      ],
+      answer: 1,
+      explanation: "<p>車いすテニスでは、ボールが2回までバウンドしても大丈夫です！<br>（2回目はコートの外でもOK！）</p>"
+    },
+
+
+    {
+      question: "車いすを使ってできるスポーツはどれくらいある？",
+      options: [
+        "1つだけ",
+        "3つくらい",
+        "10こ以上",
+        "全部ムリ"
+      ],
+      answer:2,
+      explanation: "<p>車いすラグビー、車いすテニス、車いすバスケなど、<br>たくさんのスポーツがあります！</p>"
+    },
+
+    
+
+    {
+      question: "パラリンピックの「パラ」って、どんな意味？",
+      options: [
+        "パラソル（かさ）のこと",
+        "パラパラまんが",
+        "ならんで一緒に、という意味",
+        "からだのパーツ"
+      ],
+      answer:2,
+      explanation: "「パラリンピック」は「オリンピックとならんで行う大会」という意味なんだよ！"
+    }
+  ];
+
+  let currentQuestion = 0;
+  let score = 0;
+  let userName = "";
+
+  const questionContainer = document.getElementById('question-container');
+  const optionsContainer = document.getElementById('options-container');
+  const resultContainer = document.getElementById('result-container');
+  const scoreText = document.getElementById('score-text');
+  const restartBtn = document.getElementById('restart');
+  const quizContainer = document.getElementById('quiz-container');
+  const rankingList = document.getElementById('ranking-list');
+
+  function startQuiz() {
+    const nicknameInput = document.getElementById('nickname');
+    if (nicknameInput.value.trim() === "") {
+      alert("ニックネームを入力してください。");
+      return;
+    }
+    userName = nicknameInput.value.trim();
+    document.getElementById('nickname-container').style.display = 'none';
+    quizContainer.style.display = 'block';
+    loadQuestion();
+  }
+
+  function loadQuestion() {
+    const q = quizData[currentQuestion];
+    document.getElementById('progress-text').textContent = `Q${currentQuestion + 1} / ${quizData.length}`;
+    questionContainer.innerHTML = q.question;
+    optionsContainer.innerHTML = '';
+
+    q.options.forEach((option, index) => {
+      const btn = document.createElement('button');
+      btn.innerHTML = option;
+      btn.addEventListener('click', () => selectAnswer(index));
+      optionsContainer.appendChild(btn);
+    });
+  }
+
+  function selectAnswer(selectedIndex) {
+    const correctIndex = quizData[currentQuestion].answer;
+    const explanation = quizData[currentQuestion].explanation;
+    const correctText = quizData[currentQuestion].options[correctIndex];
+
+    if (selectedIndex === correctIndex) {
+      score++;
+      document.getElementById('answer-header').textContent = "正解！";
+    } else {
+      document.getElementById('answer-header').textContent = "不正解";
+    }
+
+    document.getElementById('correct-text').innerHTML = `正解：${correctText}`;
+    document.getElementById('explanation-text').innerHTML = explanation;
+
+
+    quizContainer.style.display = 'none';
+    document.getElementById('explanation-container').style.display = 'block';
+  }
+
+  function nextQuestion() {
+    currentQuestion++;
+    if (currentQuestion < quizData.length) {
+      document.getElementById('explanation-container').style.display = 'none';
+      quizContainer.style.display = 'block';
+      loadQuestion();
+    } else {
+      showResult();
+    }
+  }
+
+  function showResult() {
+    document.getElementById('explanation-container').style.display = 'none';
+    resultContainer.style.display = 'block';
+
+    scoreText.innerHTML = `
+      ${userName}さんのスコアは <strong>${score} / ${quizData.length}</strong> です！
+    `;
+
+    saveRanking(userName, score);
+    displayRanking();
+  }
+
+  function saveRanking(name, score) {
+    const ranking = JSON.parse(localStorage.getItem('wafca_ranking') || '[]');
+    ranking.push({ name, score });
+    ranking.sort((a, b) => b.score - a.score);
+    if (ranking.length > 5) ranking.length = 5;
+    localStorage.setItem('wafca_ranking', JSON.stringify(ranking));
+  }
+
+  function displayRanking() {
+    const ranking = JSON.parse(localStorage.getItem('wafca_ranking') || '[]');
+    rankingList.innerHTML = '';
+    ranking.forEach((entry, i) => {
+      const li = document.createElement('li');
+      li.textContent = `${i + 1}位: ${entry.name}（${entry.score}点）`;
+      rankingList.appendChild(li);
+    });
+  }
+
+  restartBtn.addEventListener('click', () => {
+    currentQuestion = 0;
+    score = 0;
+    resultContainer.style.display = 'none';
+    quizContainer.style.display = 'block';
+    loadQuestion();
+  });
+</script>
+
+</body>
+</html>
